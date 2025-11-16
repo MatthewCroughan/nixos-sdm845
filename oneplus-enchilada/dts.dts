@@ -1,0 +1,1295 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * SDM845 OnePlus 6(T) (enchilada / fajita) common device tree source
+ *
+ * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/clock/qcom,camcc-sdm845.h>
+#include <dt-bindings/input/linux-event-codes.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/media/video-interfaces.h>
+#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+#include <dt-bindings/sound/qcom,q6afe.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
+#include <dt-bindings/sound/qcom,q6voice.h>
+
+#include "sdm845.dtsi"
+#include "sdm845-wcd9340.dtsi"
+#include "pm8998.dtsi"
+#include "pmi8998.dtsi"
+
+/delete-node/ &rmtfs_mem;
+
+/ {
+	alert-slider {
+		compatible = "gpio-keys";
+		label = "Alert slider";
+
+		pinctrl-0 = <&alert_slider_default>;
+		pinctrl-names = "default";
+
+		switch-top {
+			label = "Silent";
+			linux,input-type = <EV_ABS>;
+			linux,code = <ABS_SND_PROFILE>;
+			linux,input-value = <SND_PROFILE_SILENT>;
+			gpios = <&tlmm 126 GPIO_ACTIVE_LOW>;
+			linux,can-disable;
+		};
+
+		switch-middle {
+			label = "Vibrate";
+			linux,input-type = <EV_ABS>;
+			linux,code = <ABS_SND_PROFILE>;
+			linux,input-value = <SND_PROFILE_VIBRATE>;
+			gpios = <&tlmm 52 GPIO_ACTIVE_LOW>;
+			linux,can-disable;
+		};
+
+		switch-bottom {
+			label = "Ring";
+			linux,input-type = <EV_ABS>;
+			linux,code = <ABS_SND_PROFILE>;
+			linux,input-value = <SND_PROFILE_RING>;
+			gpios = <&tlmm 24 GPIO_ACTIVE_LOW>;
+			linux,can-disable;
+		};
+	};
+
+	aliases {
+		serial0 = &uart9;
+		serial1 = &uart6;
+	};
+
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		stdout-path = "serial0:115200n8";
+
+		framebuffer: framebuffer@9d400000 {
+			compatible = "simple-framebuffer";
+			reg = <0 0x9d400000 0 0x2400000>;
+			width = <1080>;
+			height = <2280>;
+			stride = <(1080 * 4)>;
+			format = "a8r8g8b8";
+
+			/**
+			 * HACK:
+			 * Fake panel node for simple-framebuffer to calculate DPI from. Only
+			 * needs width & height specified. This allows us to break device link
+			 * from simplefb to mdss (implicitly via panel->mdp->mdss) to fix drm
+			 * device probe ordering. Without this, simpledrm would probe second
+			 * after msm-drm, and confuse userspace with 2 GPUs in /dev/dri.
+			 * Alternative workaround is to boot with kernel parameter
+			 * `fw_devlink=permissive`, which is worse, because it can hide other
+			 * issues with device dependencies.
+			 */
+			panel = <&fb_panel>;
+
+			fb_panel: fb-panel {
+				width-mm = <68>;
+				height-mm = <145>;
+			};
+		};
+	};
+
+	gpio-hall-sensor {
+		compatible = "gpio-keys";
+		label = "Hall effect sensor";
+
+		pinctrl-0 = <&hall_sensor_default>;
+		pinctrl-names = "default";
+
+		event-hall-sensor {
+			gpios = <&tlmm 124 GPIO_ACTIVE_LOW>;
+			label = "Hall Effect Sensor";
+			linux,input-type = <EV_SW>;
+			linux,code = <SW_LID>;
+			linux,can-disable;
+			wakeup-source;
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		label = "Volume keys";
+		autorepeat;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&volume_down_gpio &volume_up_gpio>;
+
+		key-vol-down {
+			label = "Volume down";
+			linux,code = <KEY_VOLUMEDOWN>;
+			gpios = <&pm8998_gpios 5 GPIO_ACTIVE_LOW>;
+			debounce-interval = <15>;
+		};
+
+		key-vol-up {
+			label = "Volume up";
+			linux,code = <KEY_VOLUMEUP>;
+			gpios = <&pm8998_gpios 6 GPIO_ACTIVE_LOW>;
+			debounce-interval = <15>;
+		};
+	};
+
+	reserved-memory {
+		/*
+		 * The rmtfs memory region in downstream is 'dynamically allocated'
+		 * but given the same address every time. Hard code it as this address is
+		 * where the modem firmware expects it to be.
+		 */
+		rmtfs_mem: rmtfs-mem@f5b00000 {
+			compatible = "qcom,rmtfs-mem";
+			reg = <0 0xf5b00000 0 0x202000>;
+			no-map;
+
+			qcom,client-id = <1>;
+			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
+			qcom,use-guard-pages;
+		};
+
+		/*
+		 * It seems like reserving the old rmtfs_mem region is also needed to prevent
+		 * random crashes which are most likely modem related, more testing needed.
+		 */
+		removed_region: removed-region@88f00000 {
+			no-map;
+			reg = <0 0x88f00000 0 0x1c00000>;
+		};
+
+		ramoops: ramoops@ac300000 {
+			compatible = "ramoops";
+			reg = <0 0xac300000 0 0x400000>;
+			record-size = <0x40000>;
+			console-size = <0x40000>;
+			ftrace-size = <0x40000>;
+			pmsg-size = <0x200000>;
+			ecc-size = <16>;
+		};
+	};
+
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-min-microvolt = <3700000>;
+		regulator-max-microvolt = <3700000>;
+	};
+
+	/*
+	 * Apparently RPMh does not provide support for PM8998 S4 because it
+	 * is always-on; model it as a fixed regulator.
+	 */
+	vreg_s4a_1p8: pm8998-smps4 {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_s4a_1p8";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+
+		regulator-always-on;
+		regulator-boot-on;
+
+		vin-supply = <&vph_pwr>;
+	};
+
+	/*
+	 * The touchscreen regulator seems to be controlled somehow by a gpio.
+	 * Model it as a fixed regulator and keep it on. Without schematics we
+	 * don't know how this is actually wired up...
+	 */
+	ts_1p8_supply: ts-1p8-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "ts_1p8_supply";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+
+		gpio = <&tlmm 88 0>;
+		enable-active-high;
+	};
+
+	panel_vci_3v3: panel-vci-3v3-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "LCD_VCI_3V";
+
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+
+		gpio = <&tlmm 26 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+	};
+
+	panel_vddi_poc_1p8: panel-vddi-poc-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "VDDI_POC";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+
+		gpio = <&tlmm 25 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+	};
+
+	main_cam_vdig: main-cam-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "main_cam_vdig";
+
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+
+		gpio = <&tlmm 8 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_s3a_1p35>;
+		vbias-supply = <&vreg_bob>;
+	};
+
+	main_cam_vana: main-cam-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "main_cam_vana";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 27 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	front_cam_vdig: front-cam-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_vdig";
+
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+
+		gpio = <&tlmm 117 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+
+		vin-supply = <&vreg_s3a_1p35>;
+		vbias-supply = <&vreg_bob>;
+	};
+
+	front_cam_vana: front-cam-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_vana";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 104 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	sub_cam_vana: sub-cam-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "sub_cam_vana";
+
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+
+		gpio = <&tlmm 79 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_s3a_1p35>;
+		vbias-supply = <&vreg_bob>;
+	};
+
+	sub_cam_vdig: sub-cam-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "sub_cam_vdig";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 78 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	sub_cam_vaf: sub-cam-vaf-supply {
+		compatible = "regulator-fixed";
+		regulator-name = "sub_cam_vaf";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+		regulator-enable-ramp-delay = <100>;
+
+		gpio = <&tlmm 77 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+};
+
+&adsp_pas {
+	status = "okay";
+	firmware-name = "qcom/sdm845/oneplus6/adsp.mbn";
+};
+
+&apps_rsc {
+	regulators-0 {
+		compatible = "qcom,pm8998-rpmh-regulators";
+		qcom,pmic-id = "a";
+
+		vdd-s1-supply = <&vph_pwr>;
+		vdd-s2-supply = <&vph_pwr>;
+		vdd-s3-supply = <&vph_pwr>;
+		vdd-s4-supply = <&vph_pwr>;
+		vdd-s5-supply = <&vph_pwr>;
+		vdd-s6-supply = <&vph_pwr>;
+		vdd-s7-supply = <&vph_pwr>;
+		vdd-s8-supply = <&vph_pwr>;
+		vdd-s9-supply = <&vph_pwr>;
+		vdd-s10-supply = <&vph_pwr>;
+		vdd-s11-supply = <&vph_pwr>;
+		vdd-s12-supply = <&vph_pwr>;
+		vdd-s13-supply = <&vph_pwr>;
+		vdd-l1-l27-supply = <&vreg_s7a_1p025>;
+		vdd-l2-l8-l17-supply = <&vreg_s3a_1p35>;
+		vdd-l3-l11-supply = <&vreg_s7a_1p025>;
+		vdd-l4-l5-supply = <&vreg_s7a_1p025>;
+		vdd-l6-supply = <&vph_pwr>;
+		vdd-l7-l12-l14-l15-supply = <&vreg_s5a_2p04>;
+		vdd-l9-supply = <&vreg_bob>;
+		vdd-l10-l23-l25-supply = <&vreg_bob>;
+		vdd-l13-l19-l21-supply = <&vreg_bob>;
+		vdd-l16-l28-supply = <&vreg_bob>;
+		vdd-l18-l22-supply = <&vreg_bob>;
+		vdd-l20-l24-supply = <&vreg_bob>;
+		vdd-l26-supply = <&vreg_s3a_1p35>;
+		vin-lvs-1-2-supply = <&vreg_s4a_1p8>;
+
+		vreg_s3a_1p35: smps3 {
+			regulator-min-microvolt = <1352000>;
+			regulator-max-microvolt = <1352000>;
+		};
+
+		vreg_s5a_2p04: smps5 {
+			regulator-min-microvolt = <1904000>;
+			regulator-max-microvolt = <2040000>;
+		};
+
+		vreg_s7a_1p025: smps7 {
+			regulator-min-microvolt = <900000>;
+			regulator-max-microvolt = <1028000>;
+		};
+
+		vdda_mipi_csi0_0p9:
+		vdda_mipi_csi1_0p9:
+		vdda_mipi_csi2_0p9:
+		vdda_mipi_dsi0_pll:
+		vdda_qlink_lv:
+		vdda_ufs1_core:
+		vdda_usb1_ss_core:
+		vreg_l1a_0p875: ldo1 {
+			regulator-min-microvolt = <880000>;
+			regulator-max-microvolt = <880000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l2a_1p2: ldo2 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
+		};
+
+		vreg_l5a_0p8: ldo5 {
+			regulator-min-microvolt = <800000>;
+			regulator-max-microvolt = <800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l7a_1p8: ldo7 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vdda_qusb_hs0_1p8:
+		vreg_l12a_1p8: ldo12 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l14a_1p88: ldo14 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-boot-on;
+		};
+
+		vreg_l17a_1p3: ldo17 {
+			regulator-min-microvolt = <1304000>;
+			regulator-max-microvolt = <1304000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l20a_2p95: ldo20 {
+			regulator-min-microvolt = <2704000>;
+			regulator-max-microvolt = <2960000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l21a_2p95: ldo21 {
+			regulator-min-microvolt = <2704000>;
+			regulator-max-microvolt = <2960000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l22a_3p3: ldo22 {
+			regulator-min-microvolt = <2864000>;
+			regulator-max-microvolt = <3312000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};		
+
+		vreg_l23a_3p3: ldo23 {
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3312000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vdda_qusb_hs0_3p1:
+		vreg_l24a_3p075: ldo24 {
+			regulator-min-microvolt = <3088000>;
+			regulator-max-microvolt = <3088000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l25a_3p3: ldo25 {
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3312000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vdda_mipi_dsi0_1p2:
+		vdda_ufs1_1p2:
+		vreg_l26a_1p2: ldo26 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l28a_3p0: ldo28 {
+			regulator-min-microvolt = <2856000>;
+			regulator-max-microvolt = <3008000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		cam_vio_1p8:
+		vreg_lvs1_1p8: lvs1 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+	};
+
+	regulators-1 {
+		compatible = "qcom,pmi8998-rpmh-regulators";
+		qcom,pmic-id = "b";
+
+		vdd-bob-supply = <&vph_pwr>;
+
+		vreg_bob: bob {
+			regulator-min-microvolt = <3312000>;
+			regulator-max-microvolt = <3600000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
+			regulator-allow-bypass;
+		};
+	};
+
+	regulators-2 {
+		compatible = "qcom,pm8005-rpmh-regulators";
+		qcom,pmic-id = "c";
+
+		vdd-s1-supply = <&vph_pwr>;
+		vdd-s2-supply = <&vph_pwr>;
+		vdd-s3-supply = <&vph_pwr>;
+		vdd-s4-supply = <&vph_pwr>;
+
+		vreg_s3c_0p6: smps3 {
+			regulator-min-microvolt = <600000>;
+			regulator-max-microvolt = <600000>;
+		};
+	};
+};
+
+&cci {
+	status = "okay";
+};
+
+&camss {
+	vdda-phy-supply = <&vreg_l1a_0p875>;
+	vdda-pll-supply = <&vreg_l26a_1p2>;
+
+	vdda-csi0-supply = <&vdda_mipi_csi0_0p9>;
+	vdda-csi1-supply = <&vdda_mipi_csi1_0p9>;
+	vdda-csi2-supply = <&vdda_mipi_csi2_0p9>;
+
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		// Disable IMX519 as it doesn't work currently
+		// port@0 {
+		// 	reg = <0>;
+		// 	csiphy0_ep: endpoint {
+		// 		bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
+		// 		data-lanes = <0 1 2>;
+		// 		remote-endpoint = <&imx519_ep>;
+		// 	};
+		// };
+
+		port@1 {
+			reg = <1>;
+			csiphy1_ep: endpoint {
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx376k_ep>;
+			};
+		};
+
+		port@2 {
+			reg = <2>;
+			csiphy2_ep: endpoint {
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx371_ep>;
+			};
+		};
+	};
+};
+
+&cci_i2c0 {
+	// Disable IMX519 as it doesn't work currently
+	// rear_cam: camera@1a {
+	// 	compatible = "sony,imx519";
+	// 	reg = <0x1a>;
+
+	// 	reset-gpios = <&tlmm 28 GPIO_ACTIVE_LOW>;
+	// 	pinctrl-names = "default", "sleep";
+	// 	pinctrl-0 = <&main_cam_default>;
+	// 	pinctrl-1 = <&main_cam_sleep>;
+
+	// 	clocks = <&clock_camcc CAM_CC_MCLK0_CLK>;
+	// 	clock-names = "xclk";
+	// 	clock-frequency = <24000000>;
+	// 	assigned-clocks = <&clock_camcc CAM_CC_MCLK0_CLK>;
+	// 	assigned-clock-rates = <24000000>;
+
+	// 	power-domains = <&clock_camcc TITAN_TOP_GDSC>;
+
+	// 	vana-supply = <&main_cam_vana>;
+	// 	vcore-supply = <&main_cam_vdig>;
+	// 	vio-supply = <&cam_vio_1p8>;
+
+	// 	orientation = <1>; /* Rear camera */
+	// 	rotation = <90>;
+
+	// 	status = "okay";
+
+	// 	port {
+	// 		imx519_ep: endpoint {
+	// 			remote-endpoint = <&csiphy0_ep>;
+	// 			data-lanes = <1 2 3>;
+	// 			link-frequencies = /bits/ 64 <500399375>;
+	// 		};
+	// 	};
+	// };
+
+	front_cam: camera@10 {
+		compatible = "sony,imx371";
+		reg = <0x10>;
+
+		reset-gpios = <&tlmm 9 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&front_cam_default>;
+		pinctrl-1 = <&front_cam_sleep>;
+
+		clocks = <&clock_camcc CAM_CC_MCLK1_CLK>;
+		clock-names = "xclk";
+		clock-frequency = <24000000>;
+
+		power-domains = <&clock_camcc TITAN_TOP_GDSC>;
+
+		vana-supply = <&front_cam_vana>;
+		vcore-supply = <&front_cam_vdig>;
+		vio-supply = <&cam_vio_1p8>;
+
+		orientation = <0>; /* Front camera */
+		rotation = <90>;
+
+		status = "okay";
+
+		port {
+			imx371_ep: endpoint {
+				remote-endpoint = <&csiphy2_ep>;
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <654000000>;
+			};
+		};
+	};
+};
+
+&cci_i2c1 {
+	sub_cam_actuator: actuator@74 {
+		compatible = "onnn,lc898217xc";
+		reg = <0x74>;
+		vcc-supply = <&sub_cam_vaf>;
+	};
+
+	sub_cam: camera@10 {
+		compatible = "sony,imx376k";
+		reg = <0x10>;
+
+		reset-gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&sub_cam_default>;
+		pinctrl-1 = <&sub_cam_sleep>;
+
+		clocks = <&clock_camcc CAM_CC_MCLK2_CLK>;
+		clock-names = "xclk";
+		clock-frequency = <24000000>;
+
+		power-domains = <&clock_camcc TITAN_TOP_GDSC>;
+
+		vana-supply = <&sub_cam_vana>;
+		vcore-supply = <&sub_cam_vdig>;
+		vio-supply = <&cam_vio_1p8>;
+
+		orientation = <1>; /* Rear camera */
+		rotation = <270>;
+
+		lens-focus = <&sub_cam_actuator>;
+
+		status = "okay";
+
+		port {
+			imx376k_ep: endpoint {
+				remote-endpoint = <&csiphy1_ep>;
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <500000000>;
+			};
+		};
+	};
+};
+
+&cdsp_pas {
+	status = "okay";
+	firmware-name = "qcom/sdm845/oneplus6/cdsp.mbn";
+};
+
+&gcc {
+	protected-clocks = <GCC_QSPI_CORE_CLK>,
+				<GCC_QSPI_CORE_CLK_SRC>,
+				<GCC_QSPI_CNOC_PERIPH_AHB_CLK>,
+				<GCC_LPASS_Q6_AXI_CLK>,
+				<GCC_LPASS_SWAY_CLK>;
+};
+
+&gpu {
+	status = "okay";
+
+	zap-shader {
+		memory-region = <&gpu_mem>;
+		firmware-name = "qcom/sdm845/oneplus6/a630_zap.mbn";
+	};
+};
+
+&i2c3 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	nfc@28 {
+		compatible = "nxp,nxp-nci-i2c";
+		reg = <0x28>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <63 IRQ_TYPE_LEVEL_HIGH>;
+
+		enable-gpios = <&tlmm 12 GPIO_ACTIVE_HIGH>;
+		firmware-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&nfc_default>;
+	};
+};
+
+&i2c10 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	bq27441_fg: bq27441-battery@55 {
+		compatible = "ti,bq27411";
+		status = "okay";
+		reg = <0x55>;
+	};
+};
+
+&i2c12 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	synaptics-rmi4-i2c@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		interrupts-extended = <&tlmm 125 IRQ_TYPE_EDGE_FALLING>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&ts_default_pins>;
+
+		vdd-supply = <&vreg_l28a_3p0>;
+		vio-supply = <&ts_1p8_supply>;
+
+		syna,reset-delay-ms = <200>;
+		syna,startup-delay-ms = <200>;
+
+		syna,pdt-fallback-desc = [34 41 01 01 12 01];
+
+		rmi4-f01@1 {
+			reg = <0x01>;
+			syna,nosleep-mode = <1>;
+		};
+
+		rmi4_f12: rmi4-f12@12 {
+			reg = <0x12>;
+			touchscreen-x-mm = <68>;
+			syna,clip-x-high = <1079>;
+			syna,sensor-type = <1>;
+			syna,rezero-wait-ms = <200>;
+		};
+	};
+};
+
+&ipa {
+	qcom,gsi-loader = "self";
+	memory-region = <&ipa_fw_mem>;
+	firmware-name = "qcom/sdm845/oneplus6/ipa_fws.mbn";
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	status = "okay";
+	vdda-supply = <&vdda_mipi_dsi0_1p2>;
+
+	/*
+	 * Both devices use different panels but all other properties
+	 * are common. Compatible line is declared in device dts.
+	 */
+	display_panel: panel@0 {
+		status = "disabled";
+
+		reg = <0>;
+
+		vddio-supply = <&vreg_l14a_1p88>;
+		vci-supply = <&panel_vci_3v3>;
+		poc-supply = <&panel_vddi_poc_1p8>;
+
+		reset-gpios = <&tlmm 6 GPIO_ACTIVE_LOW>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&panel_reset_pins &panel_te_pin &panel_esd_pin>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	remote-endpoint = <&panel_in>;
+	data-lanes = <0 1 2 3>;
+};
+
+&mdss_dsi0_phy {
+	status = "okay";
+	vdds-supply = <&vdda_mipi_dsi0_pll>;
+};
+
+/* Modem/wifi */
+&mss_pil {
+	status = "okay";
+	firmware-name = "qcom/sdm845/oneplus6/mba.mbn", "qcom/sdm845/oneplus6/modem.mbn";
+};
+
+&pm8998_gpios {
+	volume_down_gpio: pm8998-gpio5-state {
+		pinconf {
+			pins = "gpio5";
+			function = "normal";
+			input-enable;
+			bias-pull-up;
+			qcom,drive-strength = <0>;
+		};
+	};
+
+	volume_up_gpio: pm8998-gpio6-state {
+		pinconf {
+			pins = "gpio6";
+			function = "normal";
+			input-enable;
+			bias-pull-up;
+			qcom,drive-strength = <0>;
+		};
+	};
+};
+
+&pmi8998_charger {
+	status = "okay";
+};
+
+&pmi8998_flash {
+	status = "okay";
+
+	led-0 {
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_WHITE>;
+		led-sources = <1>;
+		led-max-microamp = <500000>;
+		flash-max-microamp = <1500000>;
+		flash-max-timeout-us = <1280000>;
+	};
+
+	led-1 {
+		function = LED_FUNCTION_FLASH;
+		color = <LED_COLOR_ID_YELLOW>;
+		led-sources = <2>;
+		led-max-microamp = <500000>;
+		flash-max-microamp = <1500000>;
+		flash-max-timeout-us = <1280000>;
+	};
+};
+
+&qupv3_id_1 {
+	status = "okay";
+};
+
+&qupv3_id_0 {
+	status = "okay";
+};
+
+&qup_i2c3_default {
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&qup_i2c10_default {
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&qup_i2c12_default {
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&qup_uart9_rx {
+	drive-strength = <2>;
+	bias-pull-up;
+};
+
+&qup_uart9_tx {
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&slpi_pas {
+	firmware-name = "qcom/sdm845/oneplus6/slpi.mbn";
+	status = "okay";
+};
+
+&uart6 {
+	status = "okay";
+
+	pinctrl-0 = <&qup_uart6_4pin>;
+
+	bluetooth {
+		compatible = "qcom,wcn3990-bt";
+
+		/*
+		 * This path is relative to the qca/
+		 * subdir under lib/firmware.
+		 */
+		firmware-name = "oneplus6/crnv21.bin";
+
+		vddio-supply = <&vreg_s4a_1p8>;
+		vddxo-supply = <&vreg_l7a_1p8>;
+		vddrf-supply = <&vreg_l17a_1p3>;
+		vddch0-supply = <&vreg_l25a_3p3>;
+		max-speed = <3200000>;
+	};
+};
+
+&uart9 {
+	label = "LS-UART1";
+	status = "okay";
+};
+
+&ufs_mem_hc {
+	status = "okay";
+
+	reset-gpios = <&tlmm 150 GPIO_ACTIVE_LOW>;
+
+	vcc-supply = <&vreg_l20a_2p95>;
+	vcc-max-microamp = <600000>;
+};
+
+&ufs_mem_phy {
+	status = "okay";
+
+	vdda-phy-supply = <&vdda_ufs1_core>;
+	vdda-pll-supply = <&vdda_ufs1_1p2>;
+};
+
+&usb_1 {
+	status = "okay";
+
+	/*
+	 * disable USB3 clock requirement as the device only supports
+	 * USB2.
+	 */
+	qcom,select-utmi-as-pipe-clk;
+};
+
+&usb_1_dwc3 {
+	/*
+	 * We don't have the capability to switch modes yet.
+	 */
+	dr_mode = "peripheral";
+
+	/* fastest mode for USB 2 */
+	maximum-speed = "high-speed";
+
+	/* Remove USB3 phy as it's unused on this device. */
+	phys = <&usb_1_hsphy>;
+	phy-names = "usb2-phy";
+};
+
+&usb_1_hsphy {
+	status = "okay";
+
+	vdd-supply = <&vdda_usb1_ss_core>;
+	vdda-pll-supply = <&vdda_qusb_hs0_1p8>;
+	vdda-phy-dpdm-supply = <&vdda_qusb_hs0_3p1>;
+
+	qcom,imp-res-offset-value = <8>;
+	qcom,hstx-trim-value = <QUSB2_V2_HSTX_TRIM_21_6_MA>;
+	qcom,preemphasis-level = <QUSB2_V2_PREEMPHASIS_5_PERCENT>;
+	qcom,preemphasis-width = <QUSB2_V2_PREEMPHASIS_WIDTH_HALF_BIT>;
+};
+
+&tlmm {
+	gpio-reserved-ranges = <0 4>, <81 4>;
+
+	main_cam_default: main-cam-default-state {
+		mclk0 {
+			pins = "gpio13";
+			function = "cam_mclk";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		rst {
+			pins = "gpio28";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ois {
+			pins = "gpio40";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio27";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio8";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+	};
+
+	main_cam_sleep: main-cam-sleep-state {
+		mclk0 {
+			pins = "gpio13";
+			function = "cam_mclk";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		rst {
+			pins = "gpio28";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ois {
+			pins = "gpio40";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio27";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio8";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+	};
+
+	sub_cam_default: sub-cam-default-state {
+		mclk1 {
+			pins = "gpio15";
+			function = "cam_mclk";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		rst {
+			pins = "gpio23";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		vaf {
+			pins = "gpio77";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio78";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio79";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+	};
+
+	sub_cam_sleep: sub-cam-sleep-state {
+		mclk1 {
+			pins = "gpio15";
+			function = "cam_mclk";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		rst {
+			pins = "gpio23";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		vaf {
+			pins = "gpio77";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio78";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio79";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+	};
+
+	front_cam_default: front-cam-default-state {
+		mclk2 {
+			pins = "gpio14";
+			function = "cam_mclk";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		rst {
+			pins = "gpio9";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio104";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio117";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+	};
+
+	front_cam_sleep: front-cam-sleep-state {
+		mclk2 {
+			pins = "gpio14";
+			function = "cam_mclk";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		rst {
+			pins = "gpio9";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio104";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio117";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+	};
+
+	hall_sensor_default: hall-sensor-default-state {
+		pins = "gpio124";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+
+	alert_slider_default: alert-slider-default-state {
+		pins = "gpio126", "gpio52", "gpio24";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	ts_default_pins: ts-int-state {
+		pins = "gpio99", "gpio125";
+		function = "gpio";
+		drive-strength = <16>;
+		bias-pull-up;
+	};
+
+	panel_reset_pins: panel-reset-state {
+		pins = "gpio6";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	panel_te_pin: panel-te-state {
+		pins = "gpio10";
+		function = "mdp_vsync";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	panel_esd_pin: panel-esd-state {
+		pins = "gpio30";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	nfc_default: nfc-default-state {
+		pins = "gpio12", "gpio62", "gpio63";
+		function = "gpio";
+		drive-strength = <6>;
+		bias-pull-up;
+	};
+};
+
+&venus {
+	status = "okay";
+	firmware-name = "qcom/sdm845/oneplus6/venus.mbn";
+};
+
+&wcd9340 {
+	pinctrl-0 = <&wcd_intr_default>;
+	pinctrl-names = "default";
+	reset-gpios = <&tlmm 64 GPIO_ACTIVE_HIGH>;
+	vdd-buck-supply = <&vreg_s4a_1p8>;
+	vdd-buck-sido-supply = <&vreg_s4a_1p8>;
+	vdd-tx-supply = <&vreg_s4a_1p8>;
+	vdd-rx-supply = <&vreg_s4a_1p8>;
+	vdd-io-supply = <&vreg_s4a_1p8>;
+};
+
+&wifi {
+	status = "okay";
+	vdd-0.8-cx-mx-supply = <&vreg_l5a_0p8>;
+	vdd-1.8-xo-supply = <&vreg_l7a_1p8>;
+	vdd-1.3-rfa-supply = <&vreg_l17a_1p3>;
+	vdd-3.3-ch0-supply = <&vreg_l25a_3p3>;
+	vdd-3.3-ch1-supply = <&vreg_l23a_3p3>;
+
+	qcom,snoc-host-cap-8bit-quirk;
+	qcom,ath10k-calibration-variant = "oneplus_sdm845";
+};

@@ -1,0 +1,55 @@
+{ inputs, ... }:
+{
+  perSystem =
+    {
+      config,
+      self',
+      inputs',
+      pkgs,
+      system,
+      ...
+    }:
+    {
+      packages.sdm845-oneplus-enchilada-uboot-bootimg =
+        let
+          uboot = pkgs.callPackage ./sdm845-uboot.nix { inherit inputs; };
+        in
+        pkgs.runCommand "sdm845-oneplus-enchilada-uboot-bootimg"
+          {
+            nativeBuildInputs = with pkgs; [
+              android-tools
+            ];
+          }
+          ''
+            cp ${uboot}/u-boot-nodtb.bin ./u-boot-nodtb.bin
+            cp ${uboot}/sdm845-oneplus-enchilada.dtb ./sdm845-oneplus-enchilada.dtb
+            cp -r ${inputs.self.nixosConfigurations.sdm845-oneplus-enchilada.config.system.build.kernel} ./kernel
+            gzip ./u-boot-nodtb.bin
+            mkbootimg \
+              --header_version 2 \
+              --kernel ./u-boot-nodtb.bin.gz \
+              --dtb ./sdm845-oneplus-enchilada.dtb \
+              --base "0x00000000" \
+              --kernel_offset "0x00008000" \
+              --ramdisk_offset "0x01000000" \
+              --second_offset "0x00000000" \
+              --tags_offset "0x00000100" \
+              --pagesize 4096 \
+              -o $out
+          '';
+    };
+  flake = {
+    nixosConfigurations.sdm845-oneplus-enchilada = inputs.nixpkgs.lib.nixosSystem {
+      system = "aarch64-linux";
+      specialArgs = {
+        inherit inputs;
+      };
+      modules = [
+        "${inputs.nixpkgs}/nixos/modules/profiles/minimal.nix"
+        ./sdm845.nix
+        ./configuration.nix
+        #        ./repart.nix
+      ];
+    };
+  };
+}
