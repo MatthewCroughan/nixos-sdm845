@@ -12,6 +12,7 @@
       systems = [ "aarch64-linux" ];
       imports = [
         ./oneplus-enchilada
+        ./oneplus-fajita
       ];
     };
 }
