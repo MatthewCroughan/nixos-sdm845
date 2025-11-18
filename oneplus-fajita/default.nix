@@ -10,6 +10,7 @@
       ...
     }:
     {
+      packages.x = pkgs.callPackage ./sdm845-uboot.nix { inherit inputs; };
       packages.sdm845-oneplus-fajita-uboot-bootimg =
         let
           uboot = pkgs.callPackage ./sdm845-uboot.nix { inherit inputs; };
@@ -23,12 +24,10 @@
           ''
             cp ${uboot}/u-boot-nodtb.bin ./u-boot-nodtb.bin
             cp ${uboot}/sdm845-oneplus-fajita.dtb ./sdm845-oneplus-fajita.dtb
-            cp -r ${inputs.self.nixosConfigurations.sdm845-oneplus-fajita.config.system.build.kernel} ./kernel
             gzip ./u-boot-nodtb.bin
+            cat ./u-boot-nodtb.bin.gz ${uboot}/sdm845-oneplus-fajita.dtb > ubootwithdtb
             mkbootimg \
-              --header_version 2 \
-              --kernel ./u-boot-nodtb.bin.gz \
-              --dtb ./sdm845-oneplus-fajita.dtb \
+              --kernel ./ubootwithdtb \
               --base "0x00000000" \
               --kernel_offset "0x00008000" \
               --ramdisk_offset "0x01000000" \
