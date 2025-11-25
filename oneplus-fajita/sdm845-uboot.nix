@@ -20,6 +20,8 @@ buildUBoot {
   };
   extraConfig = ''
     CONFIG_CMD_HASH=y
+    CONFIG_CMD_BLKMAP=y
+    CONFIG_BLKMAP=y
     CONFIG_CMD_UFETCH=y
     CONFIG_CMD_SELECT_FONT=y
     CONFIG_VIDEO_FONT_16X32=y

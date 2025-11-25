@@ -25,11 +25,7 @@
 
 `boot` is the name of the partition that exists on the mmc of the device
 4. `fastboot flash boot --slot=all <uboot-boot-image>`
-5. 
-
-
-
-
+5. ``
 
 Check device connection:
 
