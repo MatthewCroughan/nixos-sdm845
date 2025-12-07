@@ -45,6 +45,7 @@
       };
       modules = [
         "${inputs.nixpkgs}/nixos/modules/profiles/minimal.nix"
+#        "${inputs.nixpkgs}/nixos/modules/profiles/perlless.nix"
         ./sdm845.nix
         ./configuration.nix
         #        ./repart.nix

@@ -29,6 +29,7 @@ buildUBoot {
   prePatch = ''
     rm dts/upstream/src/arm64/qcom/sdm845-oneplus-enchilada.dts
 
+    cp ${./qcom-phone.env} board/qualcomm/qcom-phone.env
     cp -r ${./dts.dts} dts/upstream/src/arm64/qcom/sdm845-oneplus-common.dtsi
     cp -r ${./fajita.dts} dts/upstream/src/arm64/qcom/sdm845-oneplus-fajita.dts
     cp -r ${inputs.linux}/include/dt-bindings/input/qcom,spmi-haptics.h dts/upstream/include/dt-bindings/input

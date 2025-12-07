@@ -5,11 +5,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1762980239,
-        "narHash": "sha256-8oNVE8TrD19ulHinjaqONf9QWCKK+w4url56cdStMpM=",
+        "lastModified": 1763759067,
+        "narHash": "sha256-LlLt2Jo/gMNYAwOgdRQBrsRoOz7BPRkzvNaI/fzXi2Q=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "52a2caecc898d0b46b2b905f058ccc5081f842da",
+        "rev": "2cccadc7357c0ba201788ae99c4dfa90728ef5e0",
         "type": "github"
       },
       "original": {
@@ -35,30 +35,13 @@
         "type": "gitlab"
       }
     },
-    "mobile-nixos": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1723685418,
-        "narHash": "sha256-ZDgzeknbWB7ZS4DfbQrYZC1iWcWnL5Zhr9c6iwP26yk=",
-        "owner": "chayleaf",
-        "repo": "mobile-nixos",
-        "rev": "71e6bb4a74b91f4a45cb5387670423a56bbfad36",
-        "type": "github"
-      },
-      "original": {
-        "owner": "chayleaf",
-        "ref": "sdm845",
-        "repo": "mobile-nixos",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1763283776,
-        "narHash": "sha256-Y7TDFPK4GlqrKrivOcsHG8xSGqQx3A6c+i7novT85Uk=",
+        "lastModified": 1764950072,
+        "narHash": "sha256-BmPWzogsG2GsXZtlT+MTcAWeDK5hkbGRZTeZNW42fwA=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "50a96edd8d0db6cc8db57dab6bb6d6ee1f3dc49a",
+        "rev": "f61125a668a320878494449750330ca58b78c557",
         "type": "github"
       },
       "original": {
@@ -87,7 +70,6 @@
       "inputs": {
         "flake-parts": "flake-parts",
         "linux": "linux",
-        "mobile-nixos": "mobile-nixos",
         "nixpkgs": "nixpkgs"
       }
     }

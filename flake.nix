@@ -1,10 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    mobile-nixos = {
-      url = "github:chayleaf/mobile-nixos/sdm845";
-      flake = false;
-    };
     linux = {
       url = "gitlab:sdm845-mainline/linux/sdm845/6.16-dev";
       flake = false;

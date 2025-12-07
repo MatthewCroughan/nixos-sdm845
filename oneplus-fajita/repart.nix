@@ -13,8 +13,8 @@ in
   };
 
   # Probably necessary for root resize
-  systemd.repart.enable = true;
-  systemd.repart.partitions."03-root".Type = "root";
+  #  systemd.repart.enable = true;
+  # systemd.repart.partitions."03-root".Type = "root";
   boot.initrd.systemd.enable = true;
 #  boot.initrd.systemd.root = "gpt-auto";
   boot.initrd.supportedFilesystems.ext4 = true;
@@ -33,6 +33,7 @@ in
           Type = "linux-generic";
           SizeMinBytes = "15M";
           SizeMaxBytes = "15M";
+          GrowFileSystem = false;
         };
       };
       "10-esp" = {
@@ -67,7 +68,7 @@ in
           Format = "ext4";
           Label = "nixos";
           Minimize = "guess";
-          GrowFileSystem = true;
+          GrowFileSystem = false;
         };
       };
     };
