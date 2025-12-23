@@ -1,0 +1,12 @@
+diff --git a/kernel/sched/ext.c b/kernel/sched/ext.c
+index 94164f2dec6d..651c1e0b760e 100644
+--- a/kernel/sched/ext.c
++++ b/kernel/sched/ext.c
+@@ -8,6 +8,7 @@
+  */
+ #include <linux/btf_ids.h>
+ #include "ext_idle.h"
++#include "sched.h"
+ 
+ /*
+  * NOTE: sched_ext is in the process of growing multiple scheduler support and

@@ -6,15 +6,15 @@ in
   imports = [ "${modulesPath}/image/repart.nix" ];
   boot.loader.grub.enable = false;
 
-  system.build.x = config.system.build.image.overrideAttrs {
-    postPatch = ''
-      export SYSTEMD_REPART_MKFS_OPTIONS_VFAT="-S 4096"
-    '';
-  };
+#  system.build.x = config.system.build.image.overrideAttrs {
+#    postPatch = ''
+#      export SYSTEMD_REPART_MKFS_OPTIONS_VFAT="-S 4096"
+#    '';
+#  };
 
   # Probably necessary for root resize
-  #  systemd.repart.enable = true;
-  # systemd.repart.partitions."03-root".Type = "root";
+  systemd.repart.enable = true;
+  systemd.repart.partitions."03-root".Type = "root";
   boot.initrd.systemd.enable = true;
 #  boot.initrd.systemd.root = "gpt-auto";
   boot.initrd.supportedFilesystems.ext4 = true;
@@ -51,11 +51,11 @@ in
           '';
         };
         repartConfig = {
-          FileSystemSectorSize = 4096;
+#          FileSystemSectorSize = 4096;
           Type = "esp";
           Format = "vfat";
           Label = "ESP";
-          SizeMinBytes = "500M";
+          SizeMinBytes = "50M";
           GrowFileSystem = true;
         };
       };
@@ -68,7 +68,7 @@ in
           Format = "ext4";
           Label = "nixos";
           Minimize = "guess";
-          GrowFileSystem = false;
+          GrowFileSystem = true;
         };
       };
     };

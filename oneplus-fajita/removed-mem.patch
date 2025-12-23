@@ -1,0 +1,63 @@
+From ae9601afe32747b13d2a2f8d2810b5cf4b106cb1 Mon Sep 17 00:00:00 2001
+From: matthewcroughan <matt@croughan.sh>
+Date: Sun, 21 Dec 2025 08:13:20 +0000
+Subject: [PATCH] removed-mem-revert
+
+---
+ .../boot/dts/qcom/sdm845-oneplus-common.dtsi  | 24 +++++++++++++------
+ 1 file changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sdm845-oneplus-common.dtsi b/arch/arm64/boot/dts/qcom/sdm845-oneplus-common.dtsi
+index b6c97c1453f8..48eda7c4d809 100644
+--- a/arch/arm64/boot/dts/qcom/sdm845-oneplus-common.dtsi
++++ b/arch/arm64/boot/dts/qcom/sdm845-oneplus-common.dtsi
+@@ -130,29 +130,39 @@ cont_splash_mem: splash@9d400000 {
+ 			reg = <0 0x9d400000 0 0x02400000>;
+ 			no-map;
+ 		};
+-
++		/* The rmtfs_mem needs to be guarded due to "XPU limitations"
++		 * it is otherwise possible for an allocation adjacent to the
++		 * rmtfs_mem region to trigger an XPU violation, causing a crash.
++		 */
++		rmtfs_lower_guard: memory@f5b00000 {
++			no-map;
++			reg = <0 0xf5b00000 0 0x1000>;
++		};
+ 		/*
+ 		 * The rmtfs memory region in downstream is 'dynamically allocated'
+ 		 * but given the same address every time. Hard code it as this address is
+ 		 * where the modem firmware expects it to be.
+ 		 */
+-		rmtfs_mem: rmtfs-region@f5b00000 {
++		rmtfs_mem: memory@f5b01000 {
+ 			compatible = "qcom,rmtfs-mem";
+-			reg = <0 0xf5b00000 0 0x202000>;
+-			qcom,use-guard-pages;
++			reg = <0 0xf5b01000 0 0x200000>;
+ 			no-map;
+ 
+ 			qcom,client-id = <1>;
+-			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
++			qcom,vmid = <15>;
++		};
++		rmtfs_upper_guard: memory@f5d01000 {
++			no-map;
++			reg = <0 0xf5d01000 0 0x2000>;
+ 		};
+ 
+ 		/*
+ 		 * It seems like reserving the old rmtfs_mem region is also needed to prevent
+ 		 * random crashes which are most likely modem related, more testing needed.
+ 		 */
+-		removed_region: removed-region@88f00000 {
++		removed_region: memory@88f00000 {
+ 			no-map;
+-			reg = <0 0x88f00000 0 0x1c00000>;
++			reg = <0 0x88f00000 0 0x200000>;
+ 		};
+ 
+ 		ramoops: ramoops@ac300000 {
+-- 
+2.51.2
+

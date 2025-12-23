@@ -41,13 +41,13 @@ in
   args
   // {
     inherit src;
-    modDirVersion = "${modDirVersion}";
-    #modDirVersion = "6.17.0-next-20251007";
+#    modDirVersion = "${modDirVersion}";
+    modDirVersion = "6.19.0-rc1-next-20251219-sdm845";
     enableCommonConfig = true;
-    #  preferBuiltIn = true;
-    #  ignoreConfigErrors = true;
-    #  defconfig = "otter_defconfig";
-    autoModules = true;
+    preferBuiltIn = true;
+     ignoreConfigErrors = true;
+     defconfig = "defconfig sdm845.config";
+    autoModules = false;
     version = "${modDirVersion}";
     extraMeta = {
       platforms = [ "aarch64-linux" ];
@@ -57,6 +57,7 @@ in
   // (args.argsOverride or { })
 )).overrideAttrs
   (old: {
+#    patches = old.patches ++ (lib.filesystem.listFilesRecursive "${args.src}/debian/patches/sdm845");
     postUnpack = ''
       patchShebangs source/lib/tests/module/gen_test_kallsyms.sh
     '';

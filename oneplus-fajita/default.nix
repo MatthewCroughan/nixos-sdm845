@@ -28,11 +28,9 @@
             cat ./u-boot-nodtb.bin.gz ${uboot}/sdm845-oneplus-fajita.dtb > ubootwithdtb
             mkbootimg \
               --kernel ./ubootwithdtb \
-              --base "0x00000000" \
-              --kernel_offset "0x00008000" \
-              --ramdisk_offset "0x01000000" \
-              --second_offset "0x00000000" \
-              --tags_offset "0x00000100" \
+              --base "0x0" \
+              --ramdisk /dev/null \
+              --kernel_offset "0x8000" \
               --pagesize 4096 \
               -o $out
           '';
