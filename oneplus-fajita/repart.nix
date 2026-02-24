@@ -51,7 +51,7 @@ in
           '';
         };
         repartConfig = {
-#          FileSystemSectorSize = 4096;
+          FileSystemSectorSize = 4096;
           Type = "esp";
           Format = "vfat";
           Label = "ESP";

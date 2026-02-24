@@ -5,11 +5,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1765835352,
-        "narHash": "sha256-XswHlK/Qtjasvhd1nOa1e8MgZ8GS//jBoTqWtrS1Giw=",
+        "lastModified": 1768135262,
+        "narHash": "sha256-PVvu7OqHBGWN16zSi6tEmPwwHQ4rLPU9Plvs8/1TUBY=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "a34fae9c08a15ad73f295041fec82323541400a9",
+        "rev": "80daad04eddbbf5a4d883996a73f3f542fa437ac",
         "type": "github"
       },
       "original": {
@@ -21,26 +21,24 @@
     "linux": {
       "flake": false,
       "locked": {
-        "lastModified": 1766178691,
-        "narHash": "sha256-e6KM1AgkwNZfDGj5vWxjsc7SRMGEXkcSkIoCPFu8uoI=",
-        "owner": "sdm845",
-        "repo": "sdm845-next",
-        "rev": "1a28c2433756e6b0341284771ede7399a7206335",
-        "type": "gitlab"
+        "lastModified": 1769541252,
+        "narHash": "sha256-8UdY6FLUjNvbj9oL8GJrnfX46+PWrEpR9DlWc9XWtO4=",
+        "rev": "f8953be9083a509863e5ce4125e386150c558e97",
+        "type": "tarball",
+        "url": "https://codeberg.org/api/v1/repos/sdm845/linux/archive/f8953be9083a509863e5ce4125e386150c558e97.tar.gz"
       },
       "original": {
-        "owner": "sdm845",
-        "repo": "sdm845-next",
-        "type": "gitlab"
+        "type": "tarball",
+        "url": "https://codeberg.org/sdm845/linux/archive/sdm845-next.tar.gz"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1766070988,
-        "narHash": "sha256-G/WVghka6c4bAzMhTwT2vjLccg/awmHkdKSd2JrycLc=",
+        "lastModified": 1769170682,
+        "narHash": "sha256-oMmN1lVQU0F0W2k6OI3bgdzp2YOHWYUAw79qzDSjenU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "c6245e83d836d0433170a16eb185cefe0572f8b8",
+        "rev": "c5296fdd05cfa2c187990dd909864da9658df755",
         "type": "github"
       },
       "original": {

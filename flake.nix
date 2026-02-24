@@ -2,7 +2,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     linux = {
-      url = "gitlab:sdm845/sdm845-next";
+      url = "https://codeberg.org/sdm845/linux/archive/sdm845-next.tar.gz";
       #url = "gitlab:sdm845-mainline/linux/sdm845-6.16.7-r0";
       flake = false;
     };

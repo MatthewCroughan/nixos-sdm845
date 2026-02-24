@@ -51,7 +51,7 @@ in
 #    ./kmod2.nix
   ];
 
-  environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
+      environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
 
       boot.initrd.systemd.initrdBin = [ pkgs.multipath-tools ];
 
@@ -61,10 +61,10 @@ in
 
 
       boot.blacklistedKernelModules = [
-#        "efivarfs"
         "qcrypto"
+        "ipa"
+#        "efivarfs"
 #        "dwc3-generic-plat"
-#        "ipa"
 #        "qcom_q6v5_pas"
       ];
       boot.initrd.includeDefaultModules = false;
@@ -187,9 +187,9 @@ in
 
   boot.kernelParams = [
 #    "iommu=soft"
-#    "clk_ignore_unused"
-#    "pd_ignore_unused"
-#    "arm64.nopauth"
+    "clk_ignore_unused"
+    "pd_ignore_unused"
+    "arm64.nopauth"
     "console=ttyMSM0,115200n8"
     "console=tty0"
 
@@ -206,27 +206,29 @@ in
 
   boot.consoleLogLevel = 8;
 
-#  hardware.firmware = [ (builtins.trace firmware2.outPath firmware2) pkgs.linux-firmware ];
-  hardware.firmware = lib.mkForce [];
+  hardware.firmware = [
+    (builtins.trace firmware2.outPath firmware2) pkgs.linux-firmware
+  ];
+  #hardware.firmware = lib.mkForce [];
 
-#  hardware.deviceTree.overlays = [
-#    {
-#      name = "enable-usb";
-#      dtsText = ''
-#        /dts-v1/;
-#        /plugin/;
-#        / {
-#          compatible = "oneplus,fajita";
-#          fragment@0 {
-#            target = <&usb_1_dwc3>;
-#            __overlay__ {
-#              dr_mode = "host";
-#            };
-#          };
-#        };
-#      '';
-#    }
-#  ];
+  hardware.deviceTree.overlays = [
+    {
+      name = "enable-usb";
+      dtsText = ''
+        /dts-v1/;
+        /plugin/;
+        / {
+          compatible = "oneplus,fajita";
+          fragment@0 {
+            target = <&usb_1_dwc3>;
+            __overlay__ {
+              dr_mode = "host";
+            };
+          };
+        };
+      '';
+    }
+  ];
 
   services.openssh = {
     enable = true;

@@ -2,6 +2,7 @@
   imports = [
     ./repart.nix
     ./wireless.nix
+    ./bullshit.nix
   ];
   boot.loader = {
     systemd-boot = {

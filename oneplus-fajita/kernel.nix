@@ -42,7 +42,7 @@ in
   // {
     inherit src;
 #    modDirVersion = "${modDirVersion}";
-    modDirVersion = "6.19.0-rc1-next-20251219-sdm845";
+    modDirVersion = "6.19.0-rc7-next-20260127-sdm845";
     enableCommonConfig = true;
     preferBuiltIn = true;
      ignoreConfigErrors = true;
@@ -59,7 +59,7 @@ in
   (old: {
 #    patches = old.patches ++ (lib.filesystem.listFilesRecursive "${args.src}/debian/patches/sdm845");
     postUnpack = ''
-      patchShebangs source/lib/tests/module/gen_test_kallsyms.sh
+      cp ${./arch-arm64-boot-dts-sdm845-Makefile} source/arch/arm64/boot/dts/qcom/Makefile
     '';
     NIX_CFLAGS_COMPILE = "-Wno-error=return-type -Wno-error=implicit-function-declaration -Wno-error=int-conversion";
   })

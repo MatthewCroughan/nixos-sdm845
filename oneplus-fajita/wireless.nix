@@ -16,6 +16,7 @@ let
 in
 {
   config = {
+    networking.wireless.enable = lib.mkForce false;
     networking.wireless.iwd = {
       enable = true;
       settings.General.EnableNetworkConfiguration = true;
