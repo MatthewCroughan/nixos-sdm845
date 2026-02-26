@@ -42,7 +42,7 @@ in
   // {
     inherit src;
 #    modDirVersion = "${modDirVersion}";
-    modDirVersion = "6.19.0-rc7-next-20260127-sdm845";
+    modDirVersion = "6.19.0-next-20260220-sdm845";
     enableCommonConfig = true;
     preferBuiltIn = true;
      ignoreConfigErrors = true;
