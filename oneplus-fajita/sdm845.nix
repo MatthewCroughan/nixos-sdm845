@@ -42,6 +42,13 @@ let
     chmod +w -R $out
     rm -rf $out/lib/firmware/postmarketos
     cp -r $baseFw/lib/firmware/postmarketos/* $out/lib/firmware
+    ls -lah $out/lib/firmware/qcom/sdm845
+
+    ${pkgs.tree}/bin/tree $out/lib/firmware/qcom/sdm845
+
+    mkdir -p $out/lib/firmware/qcom/sdm845/OnePlus
+    cd $out/lib/firmware/qcom/sdm845/OnePlus
+    ln -s ../oneplus6 $out/lib/firmware/qcom/sdm845/OnePlus/enchilada
   '';
 in
 {
@@ -54,7 +61,6 @@ in
       environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
 
       boot.initrd.systemd.initrdBin = [ pkgs.multipath-tools ];
-
       boot.initrd.services.udev.rules = ''
         SUBSYSTEM=="block", ACTION!="remove", ENV{ID_PART_ENTRY_NAME}=="userdata", RUN+="${pkgs.multipath-tools}/bin/kpartx -afs /dev/%k"
       '';
@@ -207,7 +213,8 @@ in
   boot.consoleLogLevel = 8;
 
   hardware.firmware = [
-    (builtins.trace firmware2.outPath firmware2) pkgs.linux-firmware
+    (builtins.trace firmware2.outPath firmware2)
+    pkgs.linux-firmware
   ];
   #hardware.firmware = lib.mkForce [];
 
