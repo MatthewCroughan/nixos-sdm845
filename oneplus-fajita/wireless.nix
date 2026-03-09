@@ -25,7 +25,6 @@ in
     systemd.tmpfiles.rules = [
       "C /var/lib/iwd/DoESLiverpool.psk 0600 root root - ${n1}"
       "C /var/lib/iwd/gast-ost.psk 0600 root root - ${n2}"
-      "C /var/lib/iwd/DoESLiverpool-5g.psk 0600 root root - ${n3}"
     ];
   };
 }

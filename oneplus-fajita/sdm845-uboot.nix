@@ -29,6 +29,7 @@ buildUBoot {
     CONFIG_CMD_UFETCH=y
     CONFIG_CMD_SELECT_FONT=y
     CONFIG_VIDEO_FONT_16X32=y
+    CONFIG_BOOTDELAY=5
   '';
   prePatch = ''
     #rm dts/upstream/src/arm64/qcom/sdm845-oneplus-enchilada.dts

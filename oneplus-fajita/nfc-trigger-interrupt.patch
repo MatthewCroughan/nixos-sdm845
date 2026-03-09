@@ -1,0 +1,28 @@
+From 909f32cbbca41c174ffd2dbba8d5f512ef9ba0a0 Mon Sep 17 00:00:00 2001
+From: David Heidelberg <david@ixit.cz>
+Date: Sun, 8 Mar 2026 10:10:18 +0100
+Subject: [PATCH] Revert "nfc: nxp-nci: remove interrupt trigger type"
+
+Breaks our NFC.
+
+This reverts commit 57be33f85e369ce9f69f61eaa34734e0d3bd47a7.
+
+Signed-off-by: David Heidelberg <david@ixit.cz>
+---
+ drivers/nfc/nxp-nci/i2c.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/nfc/nxp-nci/i2c.c b/drivers/nfc/nxp-nci/i2c.c
+index 6a5ce8ff91f0..049662ffdf97 100644
+--- a/drivers/nfc/nxp-nci/i2c.c
++++ b/drivers/nfc/nxp-nci/i2c.c
+@@ -305,7 +305,7 @@ static int nxp_nci_i2c_probe(struct i2c_client *client)
+ 
+ 	r = request_threaded_irq(client->irq, NULL,
+ 				 nxp_nci_i2c_irq_thread_fn,
+-				 IRQF_ONESHOT,
++				 IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+ 				 NXP_NCI_I2C_DRIVER_NAME, phy);
+ 	if (r < 0)
+ 		nfc_err(&client->dev, "Unable to register IRQ handler\n");
+

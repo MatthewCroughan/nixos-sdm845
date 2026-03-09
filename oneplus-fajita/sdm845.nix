@@ -49,6 +49,10 @@ let
     mkdir -p $out/lib/firmware/qcom/sdm845/OnePlus
     cd $out/lib/firmware/qcom/sdm845/OnePlus
     ln -s ../oneplus6 $out/lib/firmware/qcom/sdm845/OnePlus/enchilada
+
+    mkdir -p $out/lib/firmware/qca/OnePlus
+    cd $out/lib/firmware/qca/OnePlus
+    ln -s ../oneplus6 $out/lib/firmware/qca/OnePlus/enchilada
   '';
 in
 {
@@ -74,9 +78,9 @@ in
 #        "qcom_q6v5_pas"
       ];
       boot.initrd.includeDefaultModules = false;
-      boot.initrd.availableKernelModules = lib.mkForce [];
+#      boot.initrd.availableKernelModules = lib.mkForce [];
       boot.initrd.systemd.tpm2.enable = false; # This also pulls in some modules our kernel is not build with.
-      #hardware.enableRedistributableFirmware = true;
+      hardware.enableRedistributableFirmware = true;
 
       #system.nixos-init.enable = true;
       #system.etc.overlay.enable = true;
@@ -95,7 +99,7 @@ in
       #];
 
       boot.initrd.kernelModules = [
-#        "qcom_pd_mapper"
+        "qcom_pd_mapper"
 #        "qcom-pm8008-regulator"
 #        "i2c_qcom_geni"
 #        "rmi_core"
@@ -213,29 +217,77 @@ in
   boot.consoleLogLevel = 8;
 
   hardware.firmware = [
-    (builtins.trace firmware2.outPath firmware2)
+    firmware2
     pkgs.linux-firmware
   ];
   #hardware.firmware = lib.mkForce [];
 
-  hardware.deviceTree.overlays = [
-    {
-      name = "enable-usb";
-      dtsText = ''
-        /dts-v1/;
-        /plugin/;
-        / {
-          compatible = "oneplus,fajita";
-          fragment@0 {
-            target = <&usb_1_dwc3>;
-            __overlay__ {
-              dr_mode = "host";
-            };
-          };
-        };
-      '';
-    }
-  ];
+#  hardware.deviceTree.overlays = [
+#    {
+#      name = "enable-usb";
+#      dtsText = ''
+#        /dts-v1/;
+#        /plugin/;
+#        / {
+#          compatible = "oneplus,fajita";
+#          fragment@0 {
+#            target = <&usb_1_dwc3>;
+#            __overlay__ {
+#              dr_mode = "host";
+#            };
+#          };
+#        };
+#      '';
+#    }
+#  ];
+
+  systemd.services.tqftpserv = {
+    description = "Qualcomm QRTR TFTP services (tqftpserv)";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "network.target" ];
+
+    serviceConfig = {
+      ExecStart = "${pkgs.tqftpserv}/bin/tqftpserv";
+      Restart = "on-failure";
+      RestartSec = "2s";
+      # maybe use dynamicuser
+      User = "root";
+      Group = "root";
+    };
+  };
+  systemd.services.rmtfs = {
+    description = "Qualcomm Remote Filesystem Daemon (rmtfs)";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "network.target" ];
+
+    serviceConfig = {
+      ExecStart = "${pkgs.rmtfs}/bin/rmtfs -r -P -s";
+      Restart = "on-failure";
+      RestartSec = "2s";
+      # maybe use dynamicuser
+      User = "root";
+      Group = "root";
+    };
+  };
+  systemd.services.hexagonrpcd-adsp-sensorspd = {
+    description = "Daemon to support Qualcomm Hexagon ADSP virtual filesystem for SensorPD";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "suspend.target" ];
+    conflicts = [ "suspend.target" ];
+
+    serviceConfig = {
+      ExecStart = "${pkgs.hexagonrpc}/bin/hexagonrpcd -f /dev/fastrpc-adsp -d adsp -s";
+      Restart = "on-failure";
+      # This service shouldn't be run on devices with an SDSP
+      ConditionPathExists = [ "!/dev/fastrpc-sdsp" "/dev/fastrpc-adsp" ];
+      RestartSec = "3s";
+      # maybe use dynamicuser
+      User = "root";
+      Group = "root";
+    };
+  };
+
+
 
   services.openssh = {
     enable = true;
@@ -266,10 +318,13 @@ in
       name = "disable-stuff";
       patch = null;
       structuredExtraConfig = {
-         CRYPTO_DEV_QCE = lib.mkForce lib.kernel.no;
-         CRYPTO_DEV_QCOM_RNG = lib.mkForce lib.kernel.no;
+         # Crashes the kernel
+#         QCOM_IPA = lib.mkForce lib.kernel.no;
+#         ATH10K_AHB = lib.mkForce lib.kernel.yes;
+#         CRYPTO_DEV_QCE = lib.mkForce lib.kernel.no;
+#         CRYPTO_DEV_QCOM_RNG = lib.mkForce lib.kernel.no;
 #        #TEGRA_BPMP = lib.mkForce lib.kernel.no;
-         SCHED_CLASS_EXT = lib.mkForce lib.kernel.no;
+#         SCHED_CLASS_EXT = lib.mkForce lib.kernel.no;
 #        #DRM_MSM_KMS = lib.mkForce lib.kernel.no;
 #        #DRM_MSM_KMS_FBDEV = lib.mkForce lib.kernel.no;
 #        #QCOM_PD_MAPPER = lib.mkForce lib.kernel.module;

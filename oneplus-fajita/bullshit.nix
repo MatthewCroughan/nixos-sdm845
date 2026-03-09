@@ -4,6 +4,7 @@
 {
   systemd.services.phosh.environment.XDG_PICTURES_DIR = "/tmp";
 
+  hardware.graphics.enable = true;
   services.xserver.desktopManager.phosh = {
     enable = true;
     group = "users";
@@ -12,7 +13,7 @@
   programs.feedbackd.enable = true;
   programs.calls.enable = true;
   hardware.sensor.iio.enable = true;
-  systemd.packages = [ pkgs.stevia ];
+#  systemd.packages = [ pkgs.stevia ];
   environment.systemPackages = with pkgs; [
     hexagonrpc
     snapshot
@@ -23,10 +24,10 @@
     stevia
     gnome-console       # Terminal
 
-    qrtr
-    rmtfs
-    qmic
-    tqftpserv
+#    qrtr
+#    rmtfs
+#    qmic
+#    tqftpserv
   ];
   users.users."matthew" = {
     isNormalUser = true;
@@ -44,53 +45,53 @@
   systemd.services.iio-sensor-proxy.serviceConfig.RestrictAddressFamilies = [ "AF_QIPCRTR" "AF_LOCAL" ];
   systemd.services.iio-sensor-proxy.overrideStrategy = "asDropin";
 
-  systemd.services.hexagonrpcd-adsp-sensorspd = {
-    description = "Daemon to support Qualcomm Hexagon ADSP virtual filesystem for SensorPD";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "suspend.target" ];
-    conflicts = [ "suspend.target" ];
+#  systemd.services.hexagonrpcd-adsp-sensorspd = {
+#    description = "Daemon to support Qualcomm Hexagon ADSP virtual filesystem for SensorPD";
+#    wantedBy = [ "multi-user.target" ];
+#    before = [ "suspend.target" ];
+#    conflicts = [ "suspend.target" ];
+#
+#    serviceConfig = {
+#      ExecStart = "${pkgs.hexagonrpc}/bin/hexagonrpcd -f /dev/fastrpc-adsp -d adsp -s";
+#      Restart = "on-failure";
+#      # This service shouldn't be run on devices with an SDSP
+#      ConditionPathExists = [ "!/dev/fastrpc-sdsp" "/dev/fastrpc-adsp" ];
+#      RestartSec = "3s";
+#      # maybe use dynamicuser
+#      User = "root";
+#      Group = "root";
+#    };
+#  };
 
-    serviceConfig = {
-      ExecStart = "${pkgs.hexagonrpc}/bin/hexagonrpcd -f /dev/fastrpc-adsp -d adsp -s";
-      Restart = "on-failure";
-      # This service shouldn't be run on devices with an SDSP
-      ConditionPathExists = [ "!/dev/fastrpc-sdsp" "/dev/fastrpc-adsp" ];
-      RestartSec = "3s";
-      # maybe use dynamicuser
-      User = "root";
-      Group = "root";
-    };
-  };
-
-  systemd.services.tqftpserv = {
-    description = "Qualcomm QRTR TFTP services (tqftpserv)";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "network.target" ];
-
-    serviceConfig = {
-      ExecStart = "${pkgs.tqftpserv}/bin/tqftpserv";
-      Restart = "on-failure";
-      RestartSec = "2s";
-      # maybe use dynamicuser
-      User = "root";
-      Group = "root";
-    };
-  };
-  systemd.services.rmtfs = {
-    description = "Qualcomm Remote Filesystem Daemon (rmtfs)";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "network.target" ];
-
-    serviceConfig = {
-      ExecStart = "${pkgs.rmtfs}/bin/rmtfs -r -P -s";
-      Restart = "on-failure";
-      RestartSec = "2s";
-      # maybe use dynamicuser
-      User = "root";
-      Group = "root";
-    };
-  };
-  # Maybe not needed because it's in kernel now 
+#  systemd.services.tqftpserv = {
+#    description = "Qualcomm QRTR TFTP services (tqftpserv)";
+#    wantedBy = [ "multi-user.target" ];
+#    before = [ "network.target" ];
+#
+#    serviceConfig = {
+#      ExecStart = "${pkgs.tqftpserv}/bin/tqftpserv";
+#      Restart = "on-failure";
+#      RestartSec = "2s";
+#      # maybe use dynamicuser
+#      User = "root";
+#      Group = "root";
+#    };
+#  };
+#  systemd.services.rmtfs = {
+#    description = "Qualcomm Remote Filesystem Daemon (rmtfs)";
+#    wantedBy = [ "multi-user.target" ];
+#    before = [ "network.target" ];
+#
+#    serviceConfig = {
+#      ExecStart = "${pkgs.rmtfs}/bin/rmtfs -r -P -s";
+#      Restart = "on-failure";
+#      RestartSec = "2s";
+#      # maybe use dynamicuser
+#      User = "root";
+#      Group = "root";
+#    };
+#  };
+  # Maybe not needed because it's in kernel now
   #systemd.services.pd-mapper = {
   #  description = "Qualcomm Protection Domain Mapper (pd-mapper)";
   #  wantedBy = [ "multi-user.target" ];
@@ -105,7 +106,7 @@
   #    Group = "root";
   #  };
   #};
-  networking.modemmanager.enable = true;
+#  networking.modemmanager.enable = true;
   services.udev.extraRules = ''
     # iio-sensor-proxy with libssc: accelerometer mount matrix
     SUBSYSTEM=="misc", KERNEL=="fastrpc-*", ENV{ACCEL_MOUNT_MATRIX}+="-1, 0, 0; 0, -1, 0; 0, 0, -1"
@@ -136,5 +137,18 @@
     };
   };
 
+  security.pam.services.login.updateWtmp = lib.mkForce false;
+#  boot.kernelParams = [ "console=ttyGS0,115200" ];
+#  boot.kernelPatches = [
+#    {
+#      name = "disable-stuff";
+#      patch = null;
+#      structuredExtraConfig = {
+#        USB_G_SERIAL = lib.mkForce lib.kernel.yes;
+#        U_SERIAL_CONSOLE = lib.mkForce lib.kernel.yes;
+#        USB_U_SERIAL = lib.mkForce lib.kernel.yes;
+#      };
+#    }
+#  ];
 }
 

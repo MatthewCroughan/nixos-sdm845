@@ -5,11 +5,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1769996383,
-        "narHash": "sha256-AnYjnFWgS49RlqX7LrC4uA+sCCDBj0Ry/WOJ5XWAsa0=",
+        "lastModified": 1772408722,
+        "narHash": "sha256-rHuJtdcOjK7rAHpHphUb1iCvgkU3GpfvicLMwwnfMT0=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "57928607ea566b5db3ad13af0e57e921e6b12381",
+        "rev": "f20dc5d9b8027381c474144ecabc9034d6a839a3",
         "type": "github"
       },
       "original": {
@@ -21,24 +21,24 @@
     "linux": {
       "flake": false,
       "locked": {
-        "lastModified": 1771769426,
-        "narHash": "sha256-48NuaT7wkn+Pi0z8Ni4cGdiU/VoUefJI3g3EmMzymWk=",
-        "rev": "7d441bed24319bc264b4a3bb533957e06b342a7e",
+        "lastModified": 1772971755,
+        "narHash": "sha256-XY8U1V3NcnzJo3Zg7HT7tDrGPT2Bp1Nwq26quG+AYts=",
+        "rev": "909f32cbbca41c174ffd2dbba8d5f512ef9ba0a0",
         "type": "tarball",
-        "url": "https://codeberg.org/api/v1/repos/sdm845/linux/archive/7d441bed24319bc264b4a3bb533957e06b342a7e.tar.gz"
+        "url": "https://codeberg.org/api/v1/repos/sdm845/linux/archive/909f32cbbca41c174ffd2dbba8d5f512ef9ba0a0.tar.gz"
       },
       "original": {
         "type": "tarball",
-        "url": "https://codeberg.org/sdm845/linux/archive/sdm845-next.tar.gz"
+        "url": "https://codeberg.org/sdm845/linux/archive/sdm845-next-20260306-1.tar.gz"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1771848320,
-        "narHash": "sha256-0MAd+0mun3K/Ns8JATeHT1sX28faLII5hVLq0L3BdZU=",
+        "lastModified": 1772963539,
+        "narHash": "sha256-9jVDGZnvCckTGdYT53d/EfznygLskyLQXYwJLKMPsZs=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
+        "rev": "9dcb002ca1690658be4a04645215baea8b95f31d",
         "type": "github"
       },
       "original": {
@@ -50,11 +50,11 @@
     },
     "nixpkgs-lib": {
       "locked": {
-        "lastModified": 1769909678,
-        "narHash": "sha256-cBEymOf4/o3FD5AZnzC3J9hLbiZ+QDT/KDuyHXVJOpM=",
+        "lastModified": 1772328832,
+        "narHash": "sha256-e+/T/pmEkLP6BHhYjx6GmwP5ivonQQn0bJdH9YrRB+Q=",
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
-        "rev": "72716169fe93074c333e8d0173151350670b824c",
+        "rev": "c185c7a5e5dd8f9add5b2f8ebeff00888b070742",
         "type": "github"
       },
       "original": {

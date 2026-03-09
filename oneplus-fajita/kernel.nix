@@ -42,12 +42,12 @@ in
   // {
     inherit src;
 #    modDirVersion = "${modDirVersion}";
-    modDirVersion = "6.19.0-next-20260220-sdm845";
+    modDirVersion = "7.0.0-rc2-next-20260306-sdm845";
     enableCommonConfig = true;
     preferBuiltIn = true;
      ignoreConfigErrors = true;
      defconfig = "defconfig sdm845.config";
-    autoModules = false;
+    autoModules = true;
     version = "${modDirVersion}";
     extraMeta = {
       platforms = [ "aarch64-linux" ];
