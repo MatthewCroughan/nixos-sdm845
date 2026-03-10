@@ -62,13 +62,20 @@ in
 #    ./kmod2.nix
   ];
 
-      environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
 
-      boot.initrd.systemd.initrdBin = [ pkgs.multipath-tools ];
+      ## The bad way with kpartx
+      #environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
+      #boot.initrd.systemd.initrdBin = [ pkgs.multipath-tools ];
+      #boot.initrd.services.udev.rules = ''
+      #  SUBSYSTEM=="block", ACTION!="remove", ENV{ID_PART_ENTRY_NAME}=="userdata", RUN+="${pkgs.multipath-tools}/bin/kpartx -afs /dev/%k"
+      #'';
+
+      #environment.variables.SYSTEMD_RELAX_ESP_CHECKS = "1";
+
+      boot.initrd.systemd.initrdBin = [ pkgs.util-linux ];
       boot.initrd.services.udev.rules = ''
-        SUBSYSTEM=="block", ACTION!="remove", ENV{ID_PART_ENTRY_NAME}=="userdata", RUN+="${pkgs.multipath-tools}/bin/kpartx -afs /dev/%k"
+        SUBSYSTEM=="block", ACTION!="remove", ENV{ID_PART_ENTRY_NAME}=="userdata", RUN+="${pkgs.util-linux}/bin/losetup --partscan --find --sector-size 4096 --loop-ref userdata /dev/%k"
       '';
-
 
       boot.blacklistedKernelModules = [
         "qcrypto"
